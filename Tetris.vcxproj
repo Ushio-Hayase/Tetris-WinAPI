@@ -139,8 +139,13 @@
     <ResourceCompile Include="Tetris.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Blue.bmp" />
+    <Image Include="Green.bmp" />
+    <Image Include="Purple.bmp" />
+    <Image Include="Red.bmp" />
     <Image Include="small.ico" />
     <Image Include="Tetris.ico" />
+    <Image Include="Yellow.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

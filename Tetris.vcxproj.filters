@@ -45,5 +45,20 @@
     <Image Include="Tetris.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="Green.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Purple.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Yellow.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Red.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Blue.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
