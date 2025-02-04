@@ -1,8 +1,9 @@
 // Tetris.cpp : Defines the entry point for the application.
 //
 
-#include "framework.h"
 #include "Tetris.h"
+
+#include "framework.h"
 
 constexpr int MAX_LOADSTRING = 255;
 constexpr int MAIN_WINDOW_WIDTH = 600;
@@ -13,31 +14,37 @@ constexpr int BITMAP_SIZE = 48;
 
 enum Block
 {
-    Wall, I, O, S, Z, L, J, T, None
+    Wall,
+    I,
+    O,
+    S,
+    Z,
+    L,
+    J,
+    T,
+    None
 };
 
 // Global Variables:
-HINSTANCE hInst;                                // current instance
-WCHAR szTitle[MAX_LOADSTRING] = TEXT("Tetris");                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING] = TEXT("Main");            // the main window class name
+HINSTANCE hInst;                                 // current instance
+WCHAR szTitle[MAX_LOADSTRING] = TEXT("Tetris");  // The title bar text
+WCHAR szWindowClass[MAX_LOADSTRING] =
+    TEXT("Main");  // the main window class name
 int score = 0;
 Block** board;
 std::map<int, HBITMAP> blockBitmap;
-
+int currentBlock[4][2];
 
 // Forward declarations of functions included in this code module:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-void                InitMainWindow(HDC, int, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-void                PrintTetrisBoard(HDC, int width, int height);
+ATOM MyRegisterClass(HINSTANCE hInstance);
+BOOL InitInstance(HINSTANCE, int);
+void InitMainWindow(HDC, int, int);
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void PrintTetrisBoard(HDC, int width, int height);
+bool MoveBlock(int srcX, int srcY, int tgtX, int tgtY);
 
-
-
-int APIENTRY wWinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPWSTR    lpCmdLine,
-                     int       nCmdShow)
+int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                      LPWSTR lpCmdLine, int nCmdShow)
 {
     // TODO: Place code here.
 
@@ -45,17 +52,16 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
     for (int i = 0; i < BOARD_HEIGHT; ++i)
     {
         board[i] = new Block[BOARD_WIDTH];
-        for (int j = 0; j < BOARD_WIDTH; ++j)
-            board[j][i] = None;
+        for (int j = 0; j < BOARD_WIDTH; ++j) board[j][i] = None;
     }
 
-    blockBitmap[I] = LoadBitmapW(hInstance, TEXT("Blue"));
-    blockBitmap[O] = LoadBitmapW(hInstance, TEXT("Yellow"));
-    blockBitmap[S] = LoadBitmapW(hInstance, TEXT("Red"));
-    blockBitmap[Z] = LoadBitmapW(hInstance, TEXT("Red"));
-    blockBitmap[L] = LoadBitmapW(hInstance, TEXT("Green"));
-    blockBitmap[J] = LoadBitmapW(hInstance, TEXT("Green"));
-    blockBitmap[T] = LoadBitmapW(hInstance, TEXT("Purple"));
+    blockBitmap[I] = LoadBitmapW(hInstance, TEXT("IDC_Blue"));
+    blockBitmap[O] = LoadBitmapW(hInstance, TEXT("IDC_Yellow"));
+    blockBitmap[S] = LoadBitmapW(hInstance, TEXT("IDC_Red"));
+    blockBitmap[Z] = LoadBitmapW(hInstance, TEXT("IDC_Red"));
+    blockBitmap[L] = LoadBitmapW(hInstance, TEXT("IDC_Green"));
+    blockBitmap[J] = LoadBitmapW(hInstance, TEXT("IDC_Green"));
+    blockBitmap[T] = LoadBitmapW(hInstance, TEXT("IDC_Purple"));
 
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -63,12 +69,13 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
     MyRegisterClass(hInstance);
 
     // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
+    if (!InitInstance(hInstance, nCmdShow))
     {
         return FALSE;
     }
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TETRIS));
+    HACCEL hAccelTable =
+        LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TETRIS));
 
     MSG msg;
 
@@ -82,10 +89,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
         }
     }
 
-    return (int) msg.wParam;
+    return (int)msg.wParam;
 }
-
-
 
 //
 //  FUNCTION: MyRegisterClass()
@@ -98,17 +103,17 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TETRIS));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_TETRIS);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wcex.style = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc = WndProc;
+    wcex.cbClsExtra = 0;
+    wcex.cbWndExtra = 0;
+    wcex.hInstance = hInstance;
+    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TETRIS));
+    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_TETRIS);
+    wcex.lpszClassName = szWindowClass;
+    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
     return RegisterClassExW(&wcex);
 }
@@ -125,20 +130,21 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   hInst = hInstance; // Store instance handle in our global variable
+    hInst = hInstance;  // Store instance handle in our global variable
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      990, 240, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT, nullptr, nullptr, hInstance, nullptr);
+    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, 990,
+                              240, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT,
+                              nullptr, nullptr, hInstance, nullptr);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
+    if (!hWnd)
+    {
+        return FALSE;
+    }
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+    ShowWindow(hWnd, nCmdShow);
+    UpdateWindow(hWnd);
 
-   return TRUE;
+    return TRUE;
 }
 
 //
@@ -157,35 +163,45 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     switch (message)
     {
-    case WM_CREATE:
-    {
-        break;
-    }
-    case WM_COMMAND:
+        case WM_CREATE:
+        {
+            break;
+        }
+        case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
             // Parse the menu selections:
             switch (wmId)
             {
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
+                case IDM_EXIT:
+                    DestroyWindow(hWnd);
+                    break;
+                default:
+                    return DefWindowProc(hWnd, message, wParam, lParam);
             }
         }
         break;
-    case WM_KEYDOWN:
-        switch (wParam)
-        {
-        case VK_LEFT: {}
-        case VK_RIGHT: {}
-        case VK_DOWN: {}
-        case VK_UP: {}
-        case VK_SPACE: {}
-        }
+        case WM_KEYDOWN:
+            switch (wParam)
+            {
+                case VK_LEFT:
+                {
+                }
+                case VK_RIGHT:
+                {
+                }
+                case VK_DOWN:
+                {
+                }
+                case VK_UP:
+                {
+                }
+                case VK_SPACE:
+                {
+                }
+            }
 
-    case WM_PAINT:
+        case WM_PAINT:
         {
             PAINTSTRUCT ps;
             hdc = BeginPaint(hWnd, &ps);
@@ -197,32 +213,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             int height = rect.bottom - rect.top;
             InitMainWindow(hdc, width, height);
             PrintTetrisBoard(hdc, width, height);
-            
 
             EndPaint(hWnd, &ps);
         }
         break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            break;
+        default:
+            return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
 }
 
-/// @brief ¸ÞÀÎ À©µµ¿ì È­¸é ¹èÄ¡
-/// @param hdc ¸ÞÀÎ À©µµ¿ìÀÇ Device Context Handle
-/// @param width °¡·Î ±æÀÌ
-/// @param height ¼¼·Î ±æÀÌ
+/// @brief ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È­ï¿½ï¿½ ï¿½ï¿½Ä¡
+/// @param hdc ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Device Context Handle
+/// @param width ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+/// @param height ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 void InitMainWindow(HDC hdc, int width, int height)
 {
-    // Å×Æ®¸®½º¸¦ ÇÃ·¹ÀÌÇÒ °ø°£ »ý¼º
+    // ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     HPEN pen = CreatePen(PS_SOLID, 5, RGB(0, 0, 0));
     HPEN oldPen = (HPEN)SelectObject(hdc, pen);
     MoveToEx(hdc, 2, 2, nullptr);
     LineTo(hdc, width / 2, 2);
-    MoveToEx(hdc,width / 2, 2, nullptr);
+    MoveToEx(hdc, width / 2, 2, nullptr);
     LineTo(hdc, width / 2, height - 2);
     MoveToEx(hdc, width / 2, height - 2, nullptr);
     LineTo(hdc, 2, height - 2);
@@ -233,7 +248,7 @@ void InitMainWindow(HDC hdc, int width, int height)
 
     TCHAR str[1024];
 
-    wsprintf(str, TEXT("Á¡¼ö: %d"), score);
+    wsprintf(str, TEXT("ï¿½ï¿½ï¿½ï¿½: %d"), score);
     TextOutW(hdc, width / 4 * 3, height / 3, str, lstrlenW(str));
 }
 
@@ -253,18 +268,32 @@ void PrintTetrisBoard(HDC hdc, int windowWidth, int windowHeight)
         {
             switch (board[w][h])
             {
-            case Wall:
-                break;
-            case None:
-                break;
-            default:
-                HDC MemDC = CreateCompatibleDC(hdc);
-                HBITMAP oldBitmap = static_cast<HBITMAP>(SelectObject(MemDC, blockBitmap[board[w][h]]));
-                int blockStartX = w * width / BOARD_WIDTH + boardStartX;
-                int blockStartY = h * height / BOARD_HEIGHT + boardStartY;
-                BitBlt(hdc, 0, 0, BITMAP_SIZE, BITMAP_SIZE, MemDC, blockStartX, blockStartY, SRCCOPY);
-                SelectObject(MemDC, oldBitmap);
+                case Wall:
+                    break;
+                case None:
+                    break;
+                default:
+                    HDC MemDC = CreateCompatibleDC(hdc);
+                    HBITMAP oldBitmap = static_cast<HBITMAP>(
+                        SelectObject(MemDC, blockBitmap[board[w][h]]));
+                    int blockStartX = w * width / BOARD_WIDTH + boardStartX;
+                    int blockStartY = h * height / BOARD_HEIGHT + boardStartY;
+                    BitBlt(hdc, 0, 0, BITMAP_SIZE, BITMAP_SIZE, MemDC,
+                           blockStartX, blockStartY, SRCCOPY);
+                    SelectObject(MemDC, oldBitmap);
             }
         }
     }
+}
+
+bool MoveBlock(int srcX, int srcY, int tgtX, int tgtY)
+{
+    if (tgtX < 0 || tgtX >= BOARD_WIDTH || tgtY < 0 || tgtY > BOARD_HEIGHT)
+        return false;
+    if (board[tgtX][tgtY] != None || board[srcX][srcY] == None) return false;
+
+    board[tgtX][tgtY] = board[srcX][srcY];
+    board[srcX][srcY] = None;
+
+    return true;
 }
