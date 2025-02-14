@@ -41,7 +41,10 @@ BOOL InitInstance(HINSTANCE, int);
 void InitMainWindow(HDC, int, int);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void PrintTetrisBoard(HDC, int width, int height);
-bool MoveBlock(int srcX, int srcY, int tgtX, int tgtY);
+void MoveBlock(int valueX, int valueY);
+int CheckLine();
+void RemoveLine(int h);
+void RotateBlock(bool isClockDirection);
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                       LPWSTR lpCmdLine, int nCmdShow)
@@ -184,17 +187,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case WM_KEYDOWN:
             switch (wParam)
             {
+                int srcX, srcY;
                 case VK_LEFT:
                 {
+                    MoveBlock(-1, 0);
                 }
                 case VK_RIGHT:
                 {
+                    MoveBlock(1, 0);
                 }
                 case VK_DOWN:
                 {
+                    MoveBlock(0, -1);
                 }
                 case VK_UP:
                 {
+                    RotateBlock(true);
                 }
                 case VK_SPACE:
                 {
@@ -226,13 +234,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-/// @brief ���� ������ ȭ�� ��ġ
-/// @param hdc ���� �������� Device Context Handle
-/// @param width ���� ����
-/// @param height ���� ����
+/// @brief 메인 윈도우 초기화
+/// @param hdc : 메인 윈도우 Device Context Handle
+/// @param width : 메인 클라이언트 너비
+/// @param height : 메인 클라이언트 높이
 void InitMainWindow(HDC hdc, int width, int height)
 {
-    // ��Ʈ������ �÷����� ���� ����
     HPEN pen = CreatePen(PS_SOLID, 5, RGB(0, 0, 0));
     HPEN oldPen = (HPEN)SelectObject(hdc, pen);
     MoveToEx(hdc, 2, 2, nullptr);
@@ -252,6 +259,10 @@ void InitMainWindow(HDC hdc, int width, int height)
     TextOutW(hdc, width / 4 * 3, height / 3, str, lstrlenW(str));
 }
 
+/// @brief 테트리스 보드를 윈도우에 출력
+/// @param hdc : 메인 윈도우 핸들
+/// @param windowWidth : 메인 윈도우 너비
+/// @param windowHeight : 메인 윈도우 높이
 void PrintTetrisBoard(HDC hdc, int windowWidth, int windowHeight)
 {
     const int boardEndX = windowWidth / 2 - 2;
@@ -286,14 +297,61 @@ void PrintTetrisBoard(HDC hdc, int windowWidth, int windowHeight)
     }
 }
 
-bool MoveBlock(int srcX, int srcY, int tgtX, int tgtY)
+/// @brief 윈래 위치에 있는 블럭을 새로운 위치로 옮깁니다.
+void MoveBlock(int valueX, int valueY)
 {
-    if (tgtX < 0 || tgtX >= BOARD_WIDTH || tgtY < 0 || tgtY > BOARD_HEIGHT)
-        return false;
-    if (board[tgtX][tgtY] != None || board[srcX][srcY] == None) return false;
+    for (int i = 0; i < 4; ++i)
+    {
+        int srcX, srcY, tgtX, tgtY;
+        srcX = currentBlock[i][0];
+        srcY = currentBlock[i][1];
+        tgtX = srcX + valueX;
+        tgtY = srcY + valueY;
+        if (tgtX < 0 || tgtX >= BOARD_WIDTH || tgtY < 0 || tgtY > BOARD_HEIGHT)
+            return;
+        if (board[tgtX][tgtY] != None || board[srcX][srcY] == None) return;
+    }
 
-    board[tgtX][tgtY] = board[srcX][srcY];
-    board[srcX][srcY] = None;
+    for (int i = 0; i < 4; ++i)
+    {
+        int srcX, srcY, tgtX, tgtY;
+        srcX = currentBlock[i][0];
+        srcY = currentBlock[i][1];
+        tgtX = srcX + valueX;
+        tgtY = srcY + valueY;
+        board[tgtX][tgtY] = board[srcX][srcY];
+        board[srcX][srcY] = None;
 
-    return true;
+        return;
+    }
 }
+
+/// @brief 꽉찬 줄의 인덱스를 찾습니다.
+/// @return 아래에서부터 찾은 첫번째 꽉찬 줄의 인덱스를 반환
+int CheckLine()
+{
+    bool isFull = true;
+    for (int i = 0; i < BOARD_HEIGHT; ++i)
+    {
+        for (int j = 0; j < BOARD_WIDTH; ++j)
+        {
+            if (board[j][i] == None) isFull = false;
+        }
+        if (isFull) return i;
+    }
+
+    return -1;
+}
+
+/// @brief 주어진 인자의 줄을 삭제합니다.
+/// @param h : 삭제할 줄의 인덱스를 입력합니다.
+void RemoveLine(int h)
+{
+    for (int i = h + 1; i < BOARD_HEIGHT; ++i)
+    {
+        for (int j = 0; j < BOARD_WIDTH; ++j) board[j][i - 1] = board[j][i];
+    }
+    for (int j = 0; j < BOARD_WIDTH; ++j) board[j][BOARD_HEIGHT - 1] = None;
+}
+
+void RotateBlock(bool isClockDirection) {}
